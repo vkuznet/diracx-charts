@@ -122,13 +122,13 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
   {{- $db_host_port = print $db_host ":" $db_port }}
 {{- end }}
 
-{{- $sql_url := printf "mysql+aiomysql://%s:%s@%s/%s" $db_user $db_password $db_host_port $db_internal_name }}
-{{- $sql_root_url := printf "mysql+aiomysql://%s:%s@%s/%s" $db_root_user $db_root_password $db_host_port $db_internal_name }}
+{{- $sql_url := printf "mysql+aiomysql://%s:%s@%s/%s" ($db_user | urlquery) ($db_password | urlquery) $db_host_port $db_internal_name }}
+{{- $sql_root_url := printf "mysql+aiomysql://%s:%s@%s/%s" ($db_root_user | urlquery) ($db_root_password | urlquery) $db_host_port $db_internal_name }}
 
 generate_secret_if_needed diracx-sql-connection-urls \
-  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="{{ $sql_url }}"
+  {{ printf "--from-literal=DIRACX_DB_URL_%s=%s" ($dbName | upper) $sql_url | replace "'" "'\\''" | squote }}
 generate_secret_if_needed diracx-sql-root-connection-urls \
-  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="{{ $sql_root_url }}"
+  {{ printf "--from-literal=DIRACX_DB_URL_%s=%s" ($dbName | upper) $sql_root_url | replace "'" "'\\''" | squote }}
 
 {{- end }}
 {{- end }}
@@ -204,13 +204,16 @@ generate_secret_if_needed diracx-os-root-connection-urls \
   {{- $os_host_port = print $osDbHost ":" $osDbPort }}
 {{- end }}
 
-{{- $os_url_string := printf "https://%s:%s@%s" $osDbUser $osDbPassword $os_host_port }}
-{{- $os_root_url_string := printf "https://%s:%s@%s" $osDbRootUser $osDbRootPassword $os_host_port }}
+{{- $os_url_string := printf "https://%s:%s@%s" ($osDbUser | urlquery) ($osDbPassword | urlquery) $os_host_port }}
+{{- $os_root_url_string := printf "https://%s:%s@%s" ($osDbRootUser | urlquery) ($osDbRootPassword | urlquery) $os_host_port }}
+
+{{- $os_json := printf "{\"hosts\": \"%s\", \"use_ssl\": true, \"verify_certs\": false}" $os_url_string }}
+{{- $os_root_json := printf "{\"hosts\": \"%s\", \"use_ssl\": true, \"verify_certs\": false}" $os_root_url_string }}
 
 generate_secret_if_needed diracx-os-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}="{\"hosts\": \"{{ $os_url_string }}\", \"use_ssl\": true, \"verify_certs\": false}"
+  {{ printf "--from-literal=DIRACX_OS_DB_%s=%s" ($osDbName | upper) $os_json | replace "'" "'\\''" | squote }}
 generate_secret_if_needed diracx-os-root-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}="{\"hosts\": \"{{ $os_root_url_string }}\", \"use_ssl\": true, \"verify_certs\": false}"
+  {{ printf "--from-literal=DIRACX_OS_DB_%s=%s" ($osDbName | upper) $os_root_json | replace "'" "'\\''" | squote }}
 
 {{- end }}
 {{- end }}
