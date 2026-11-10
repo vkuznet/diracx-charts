@@ -117,9 +117,16 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
   {{- $db_internal_name = $db_settings.internalName | default $dbName }}
 {{- end }}
 
-{{- $db_host_port := print $db_host ":" $db_port }}
-{{- $url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_user ":" $db_password ) "host" $db_host_port "path" $db_internal_name ) }}
-{{- $root_url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_root_user ":" $db_root_password ) "host" $db_host_port "path" $db_internal_name ) }}
+{{- $db_host_port := $db_host }}
+{{- if not (hasSuffix (print ":" $db_port) $db_host) }}
+  {{- $db_host_port = print $db_host ":" $db_port }}
+{{- end }}
+
+{{- $encoded_db_password := urlQuery $db_password }}
+{{- $encoded_db_root_password := urlQuery $db_root_password }}
+
+{{- $url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_user ":" $encoded_db_password ) "host" $db_host_port "path" $db_internal_name ) }}
+{{- $root_url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_root_user ":" $encoded_db_root_password ) "host" $db_host_port "path" $db_internal_name ) }}
 
 generate_secret_if_needed diracx-sql-connection-urls \
   --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="{{ $url_string }}"
@@ -195,9 +202,16 @@ generate_secret_if_needed diracx-os-root-connection-urls \
   {{- $osDbPassword = $osDbSettings.password | default $defaultOsDbPassword }}
 {{- end }}
 
-{{- $os_host_port := print $osDbHost ":" $osDbPort }}
-{{- $os_url_string := print "https://" $osDbUser ":" $osDbPassword "@" $os_host_port }}
-{{- $os_root_url_string := print "https://" $osDbRootUser ":" $osDbRootPassword "@" $os_host_port }}
+{{- $os_host_port := $osDbHost }}
+{{- if not (hasSuffix (print ":" $osDbPort) $osDbHost) }}
+  {{- $os_host_port = print $osDbHost ":" $osDbPort }}
+{{- end }}
+
+{{- $encoded_os_password := urlQuery $osDbPassword }}
+{{- $encoded_os_root_password := urlQuery $osDbRootPassword }}
+
+{{- $os_url_string := print "https://" $osDbUser ":" $encoded_os_password "@" $os_host_port }}
+{{- $os_root_url_string := print "https://" $osDbRootUser ":" $encoded_os_root_password "@" $os_host_port }}
 
 generate_secret_if_needed diracx-os-connection-urls \
   --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_url_string }}", "use_ssl": true, "verify_certs": false}'
