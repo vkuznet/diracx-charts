@@ -13,6 +13,11 @@ function gen_random(){
   head -c 4096 /dev/urandom | LC_CTYPE=C tr -cd $1 | head -c $2
 }
 
+# Helper to URL-encode special characters in passwords (e.g. =, !, @)
+function urlencode() {
+  python3 -c "import urllib.parse; print(urllib.parse.quote('''$1''', safe=''))"
+}
+
 # Args: secretname, args
 function generate_secret_if_needed(){
   local secret_args=( "${@:2}")
@@ -122,16 +127,10 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
   {{- $db_host_port = print $db_host ":" $db_port }}
 {{- end }}
 
-{{- $encoded_db_password := urlEncode $db_password }}
-{{- $encoded_db_root_password := urlEncode $db_root_password }}
-
-{{- $url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_user ":" $encoded_db_password ) "host" $db_host_port "path" $db_internal_name ) }}
-{{- $root_url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_root_user ":" $encoded_db_root_password ) "host" $db_host_port "path" $db_internal_name ) }}
-
 generate_secret_if_needed diracx-sql-connection-urls \
-  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="{{ $url_string }}"
+  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="mysql+aiomysql://{{ $db_user }}:$(urlencode '{{ $db_password }}')@{{ $db_host_port }}/{{ $db_internal_name }}"
 generate_secret_if_needed diracx-sql-root-connection-urls \
-  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="{{ $root_url_string }}"
+  --from-literal=DIRACX_DB_URL_{{ $dbName | upper }}="mysql+aiomysql://{{ $db_root_user }}:$(urlencode '{{ $db_root_password }}')@{{ $db_host_port }}/{{ $db_internal_name }}"
 
 {{- end }}
 {{- end }}
@@ -207,16 +206,10 @@ generate_secret_if_needed diracx-os-root-connection-urls \
   {{- $os_host_port = print $osDbHost ":" $osDbPort }}
 {{- end }}
 
-{{- $encoded_os_password := urlEncode $osDbPassword }}
-{{- $encoded_os_root_password := urlEncode $osDbRootPassword }}
-
-{{- $os_url_string := print "https://" $osDbUser ":" $encoded_os_password "@" $os_host_port }}
-{{- $os_root_url_string := print "https://" $osDbRootUser ":" $encoded_os_root_password "@" $os_host_port }}
-
 generate_secret_if_needed diracx-os-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_url_string }}", "use_ssl": true, "verify_certs": false}'
+  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}="{\"hosts\": \"https://{{ $osDbUser }}:$(urlencode '{{ $osDbPassword }}')@{{ $os_host_port }}\", \"use_ssl\": true, \"verify_certs\": false}"
 generate_secret_if_needed diracx-os-root-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_root_url_string }}", "use_ssl": true, "verify_certs": false}'
+  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}="{\"hosts\": \"https://{{ $osDbRootUser }}:$(urlencode '{{ $osDbRootPassword }}')@{{ $os_host_port }}\", \"use_ssl\": true, \"verify_certs": false}"
 
 {{- end }}
 {{- end }}
