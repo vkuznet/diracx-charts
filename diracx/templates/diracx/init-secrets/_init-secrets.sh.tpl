@@ -76,7 +76,6 @@ mysql_root_password=$(kubectl get secret {{ .Values.mysql.auth.existingSecret }}
 
 {{- range $dbName,$dbSettings := .Values.diracx.sqlDbs.dbs }}
 
-
 # Make sure there are no connection settings
 {{ if $dbSettings }}
 {{ fail "There should be no connection settings if running mysql from this Chart" }}
@@ -91,7 +90,6 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
 # If we use an external MySQL instance
 {{- else }}
 
-
 {{- $default_db_host := $.Values.diracx.sqlDbs.default.host }}
 {{- $default_db_port := $.Values.diracx.sqlDbs.default.port }}
 {{- $default_db_root_user := $.Values.diracx.sqlDbs.default.rootUser }}
@@ -100,7 +98,6 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
 {{- $default_db_password := $.Values.diracx.sqlDbs.default.password }}
 
 {{- range $dbName, $db_settings := .Values.diracx.sqlDbs.dbs }}
-
 
 {{- if kindIs "map" $db_settings }}
 {{- $db_host :=  $db_settings.host | default $default_db_host  }}
@@ -184,32 +181,30 @@ generate_secret_if_needed diracx-os-root-connection-urls \
 
 {{- range $osDbName, $osDbSettings := .Values.diracx.osDbs.dbs }}
 
+{{- $osDbHost := $defaultOsDbHost }}
+{{- $osDbPort := $defaultOsDbPort }}
+{{- $osDbRootUser := $defaultOsDbRootUser }}
+{{- $osDbRootPassword := $defaultOsDbRootPassword }}
+{{- $osDbUser := $defaultOsDbUser }}
+{{- $osDbPassword := $defaultOsDbPassword }}
+
 {{- if kindIs "map" $osDbSettings }}
-{{- $osDbHost := $osDbSettings.host | default $defaultOsDbHost }}
-{{- $osDbPort := $osDbSettings.port | default $defaultOsDbPort }}
-{{- $osDbRootUser := $osDbSettings.rootUser | default $defaultOsDbRootUser }}
-{{- $osDbRootPassword := $osDbSettings.rootPassword | default $defaultOsDbRootPassword }}
-{{- $osDbUser := $osDbSettings.user | default $defaultOsDbUser }}
-{{- $osDbPassword := $osDbSettings.password | default $defaultOsDbPassword }}
-
-{{- $os_host_port := print $osDbHost ":" $osDbPort }}
-{{- $os_url_string := print "https://" $osDbUser ":" $osDbPassword "@" $os_host_port }}
-{{- $os_root_url_string := print "https://" $osDbRootUser ":" $osDbRootPassword "@" $os_host_port }}
-
-generate_secret_if_needed diracx-os-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_url_string }}", "use_ssl": true, "verify_certs": false}'
-generate_secret_if_needed diracx-os-root-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_root_url_string }}", "use_ssl": true, "verify_certs": false}'
-{{- else }}
-
-{{- $os_host_port := print $osDbHost ":" $osDbPort }}
-{{- $os_url_string := print "https://" $osDbUser ":" $osDbPassword "@" $os_host_port }}
-{{- $os_root_url_string := print "https://" $osDbRootUser ":" $osDbRootPassword "@" $os_host_port }}
-
-generate_secret_if_needed diracx-os-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_url_string }}", "use_ssl": true, "verify_certs": false}'
-generate_secret_if_needed diracx-os-root-connection-urls \
-  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_root_url_string }}", "use_ssl": true, "verify_certs": false}'
+  {{- $osDbHost = $osDbSettings.host | default $defaultOsDbHost }}
+  {{- $osDbPort = $osDbSettings.port | default $defaultOsDbPort }}
+  {{- $osDbRootUser = $osDbSettings.rootUser | default $defaultOsDbRootUser }}
+  {{- $osDbRootPassword = $osDbSettings.rootPassword | default $defaultOsDbRootPassword }}
+  {{- $osDbUser = $osDbSettings.user | default $defaultOsDbUser }}
+  {{- $osDbPassword = $osDbSettings.password | default $defaultOsDbPassword }}
 {{- end }}
+
+{{- $os_host_port := print $osDbHost ":" $osDbPort }}
+{{- $os_url_string := print "https://" $osDbUser ":" $osDbPassword "@" $os_host_port }}
+{{- $os_root_url_string := print "https://" $osDbRootUser ":" $osDbRootPassword "@" $os_host_port }}
+
+generate_secret_if_needed diracx-os-connection-urls \
+  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_url_string }}", "use_ssl": true, "verify_certs": false}'
+generate_secret_if_needed diracx-os-root-connection-urls \
+  --from-literal=DIRACX_OS_DB_{{ $osDbName | upper }}='{"hosts": "{{ $os_root_url_string }}", "use_ssl": true, "verify_certs": false}'
+
 {{- end }}
 {{- end }}
