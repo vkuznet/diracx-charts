@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: diracx-container-entrypoint
+  namespace: diracx
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1" # Ensures it creates before pods start
+data:
+  pre-run-hook.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    IFS=$'\n\t'
+
+    ulimit -n 8192
+
+    exec "$@"
