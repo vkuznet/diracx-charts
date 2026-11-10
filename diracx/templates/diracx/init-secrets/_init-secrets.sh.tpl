@@ -118,7 +118,7 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
 {{- end }}
 
 {{- $db_host_port := $db_host }}
-{{- if and $db_port (not (hasSuffix (print ":" $db_port) $db_host)) }}
+{{- if and $db_port (not (regexMatch ":[0-9]+$" $db_host)) }}
   {{- $db_host_port = print $db_host ":" $db_port }}
 {{- end }}
 
@@ -200,7 +200,7 @@ generate_secret_if_needed diracx-os-root-connection-urls \
 {{- end }}
 
 {{- $os_host_port := $osDbHost }}
-{{- if and $osDbPort (not (hasSuffix (print ":" $osDbPort) $osDbHost)) }}
+{{- if and $osDbPort (not (regexMatch ":[0-9]+$" $osDbHost)) }}
   {{- $os_host_port = print $osDbHost ":" $osDbPort }}
 {{- end }}
 
