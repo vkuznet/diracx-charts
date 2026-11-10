@@ -122,8 +122,8 @@ generate_secret_if_needed diracx-sql-root-connection-urls \
   {{- $db_host_port = print $db_host ":" $db_port }}
 {{- end }}
 
-{{- $encoded_db_password := urlQuery $db_password }}
-{{- $encoded_db_root_password := urlQuery $db_root_password }}
+{{- $encoded_db_password := urlEncode $db_password }}
+{{- $encoded_db_root_password := urlEncode $db_root_password }}
 
 {{- $url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_user ":" $encoded_db_password ) "host" $db_host_port "path" $db_internal_name ) }}
 {{- $root_url_string := urlJoin (dict "scheme" "mysql+aiomysql" "userinfo" ( print $db_root_user ":" $encoded_db_root_password ) "host" $db_host_port "path" $db_internal_name ) }}
@@ -207,8 +207,8 @@ generate_secret_if_needed diracx-os-root-connection-urls \
   {{- $os_host_port = print $osDbHost ":" $osDbPort }}
 {{- end }}
 
-{{- $encoded_os_password := urlQuery $osDbPassword }}
-{{- $encoded_os_root_password := urlQuery $osDbRootPassword }}
+{{- $encoded_os_password := urlEncode $osDbPassword }}
+{{- $encoded_os_root_password := urlEncode $osDbRootPassword }}
 
 {{- $os_url_string := print "https://" $osDbUser ":" $encoded_os_password "@" $os_host_port }}
 {{- $os_root_url_string := print "https://" $osDbRootUser ":" $encoded_os_root_password "@" $os_host_port }}
